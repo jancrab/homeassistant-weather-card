@@ -1,11 +1,13 @@
 import { LitElement, html, css, nothing } from 'lit';
-import { nextFiveHours, precipitationSummary, currentUV, HourlyForecastSubscription } from './weather-outlook-model.js';
+import { nextFiveHours, precipitationSummary, currentUV, outlookEnabled, HourlyForecastSubscription } from './weather-outlook-model.js';
 
 export const OUTLOOK_LABELS = {
     en: {
         heading: 'The next 5 hours', hourly: 'Hourly forecast', precipitation: 'Precipitation',
         show_hourly: 'Show the next 5 hours', show_precipitation: 'Show precipitation', show_uv: 'Show UV index',
         uv_entity: 'Optional UV sensor', uv_help: 'Uses the weather entity’s UV index unless a sensor is selected.',
+        uv_missing: 'No current UV value from this source. Your provider must supply uv_index, or select a current UV sensor (for example OpenUV).',
+        compact: 'Compact tablet layout', compact_help: 'Fits the card to its content and wraps horizontal value rows. Turn off to restore the configured scrolling and height.',
         loading: 'Loading hourly forecast…', unsupported: 'This weather entity does not provide hourly forecasts.',
         unavailable: 'Weather entity or connection unavailable.', error: 'Hourly forecast could not be loaded.',
         empty: 'No forecast for the next hour is available.', retry: 'Try again', missing: 'No data',
@@ -22,6 +24,8 @@ export const OUTLOOK_LABELS = {
         heading: 'Die nächsten 5 Stunden', hourly: 'Stündliche Vorhersage', precipitation: 'Niederschlag',
         show_hourly: 'Die nächsten 5 Stunden anzeigen', show_precipitation: 'Niederschlag anzeigen', show_uv: 'UV-Index anzeigen',
         uv_entity: 'Optionaler UV-Sensor', uv_help: 'Verwendet den UV-Index der Wetterentität, sofern kein Sensor ausgewählt ist.',
+        uv_missing: 'Diese Quelle liefert aktuell keinen UV-Wert. Der Anbieter muss uv_index liefern, oder wähle einen Sensor für den aktuellen UV-Index (z. B. OpenUV).',
+        compact: 'Kompaktes Tablet-Layout', compact_help: 'Passt die Höhe an den Inhalt an und bricht horizontale Messwertzeilen um. Ausschalten stellt Scrollen und konfigurierte Höhe wieder her.',
         loading: 'Stündliche Vorhersage wird geladen…', unsupported: 'Diese Wetterentität liefert keine stündliche Vorhersage.',
         unavailable: 'Wetterentität oder Verbindung nicht verfügbar.', error: 'Stündliche Vorhersage konnte nicht geladen werden.',
         empty: 'Für die nächste Stunde ist keine Vorhersage verfügbar.', retry: 'Erneut versuchen', missing: 'Keine Daten',
@@ -100,6 +104,7 @@ export class WeatherOutlook extends LitElement {
         }).format(value);
     }
     render() {
+        if (!outlookEnabled(this.config)) return nothing;
         if (!this.hass) return nothing;
         const c = this.config, t = outlookLabels(this.hass);
         const weather = this.hass.states[c.weather_entity];
@@ -115,7 +120,7 @@ export class WeatherOutlook extends LitElement {
         const expanded = c.details_mode === 'always' || this._expanded;
         return html`
             <header>
-                <h3>${wantsForecast ? t.heading : t.details}</h3>
+                ${wantsForecast ? nothing : html`<h3>${t.details}</h3>`}
                 ${hasDetails && c.details_mode !== 'always' ? html`
                     <button class="details-toggle" @click=${this._toggleDetails} aria-expanded=${String(expanded)} aria-controls="outlook-details" aria-label=${expanded ? t.collapse : t.expand}>
                         ${expanded ? t.less : t.details_short}<ha-icon icon="mdi:chevron-down" class=${expanded ? 'rotated' : ''}></ha-icon>
@@ -170,10 +175,11 @@ export class WeatherOutlook extends LitElement {
     }
     static styles = css`
         :host { display: block; width: 100%; min-width: 0; box-sizing: border-box; color: var(--origami-text-color, var(--primary-text-color)); font-family: inherit; font-variant-numeric: tabular-nums; pointer-events: auto; --outlook-muted: color-mix(in srgb, currentColor 72%, transparent); --outlook-line: color-mix(in srgb, currentColor 13%, transparent); --outlook-surface: color-mix(in srgb, var(--_scheme-bg, var(--ha-card-background, white)) 78%, transparent); --outlook-rain: var(--weather-card-rain-color, var(--primary-color, #1688b9)); }
-        header { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--outlook-line); margin-top: 20px; padding-top: 8px; gap: 8px; }
+        header { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--outlook-line); margin-top: var(--weather-outlook-header-gap, 20px); padding-top: 4px; gap: 8px; }
         h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
         button { min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; cursor: pointer; padding: 8px 12px; }
         button:hover { background: var(--outlook-line); }
+        header > button { margin-inline-start: auto; }
         button:focus-visible { outline: 2px solid var(--primary-color, currentColor); outline-offset: 2px; }
         .more-info { min-width: 44px; padding: 10px; }
         .details-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; font-size: 12px; padding: 8px; }
@@ -184,8 +190,8 @@ export class WeatherOutlook extends LitElement {
         .details-inner { min-height: 0; overflow: hidden; }
         .entity-link { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 11px; color: var(--outlook-muted); }
         ha-icon { --mdc-icon-size: 20px; }
-        .hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 14px 0; margin-bottom: 12px; border-radius: 14px; background: color-mix(in srgb, var(--_scheme-bg, var(--ha-card-background, white)) 60%, transparent); }
-        .hour { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; padding: 0 2px; }
+        .hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: var(--weather-outlook-hour-padding, 14px) 0; margin-bottom: 0; border-radius: 14px; background: color-mix(in srgb, var(--_scheme-bg, var(--ha-card-background, white)) 60%, transparent); }
+        .hour { display: flex; flex-direction: column; align-items: center; gap: var(--weather-outlook-hour-gap, 10px); min-width: 0; padding: 0 2px; }
         .hour + .hour { border-inline-start: 1px solid var(--outlook-line); }
         time { font-size: 11px; color: var(--outlook-muted); white-space: nowrap; }
         .condition { --mdc-icon-size: 24px; }
@@ -194,7 +200,7 @@ export class WeatherOutlook extends LitElement {
         .probability { display: flex; align-items: center; gap: 1px; font-size: 11px; }
         .probability ha-icon { --mdc-icon-size: 12px; color: var(--outlook-rain); }
         .amount { font-size: 10px; color: var(--outlook-muted); overflow-wrap: anywhere; text-align: center; }
-        .rain { background: var(--outlook-surface); padding: 14px 16px; border-radius: 16px; border: 1px solid var(--outlook-line); }
+        .rain { background: var(--outlook-surface); padding: 12px; margin-top: 8px; border-radius: 16px; border: 1px solid var(--outlook-line); }
         .rain-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
         .rain-title ha-icon { color: var(--outlook-rain); }
         .rain-hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 16px -8px; }

@@ -30,6 +30,7 @@ show_hourly: true
 show_precipitation: true
 show_uv: false
 details_mode: toggle # default: tap Details; use always for permanently visible details
+compact: true # wrap horizontal value rows and reduce spacing on tablets
 ```
 
 To enable an optional UV sensor:
@@ -39,13 +40,15 @@ show_uv: true
 uv_entity: sensor.outdoor_uv_index
 ```
 
-Omit `uv_entity` to use the weather entity's `uv_index`. Values from missing or unavailable sensors are shown as unavailable. A missing selected sensor does not silently fall back to a different source.
+Omit `uv_entity` to use the weather entity's `uv_index`; no separate sensor is needed when the provider supplies that attribute. Values from missing or unavailable sensors are shown as unavailable. A missing selected sensor does not silently fall back to a different source. The editor explains when the source has no current UV value. See [UV data sources](docs/tablet-setup.md#uv-datenquelle) for setup options.
 
 The selected weather integration must support **hourly forecasts**. Daily forecasts are not substituted. Five hours means five successive hourly timestamps beginning with the provider's next forecast, within the next five hours. Sparse data displays gaps. This is an hourly precipitation forecast, not a minute-by-minute rain radar. Home Assistant's precipitation amount can include snow or other precipitation, so it is labelled **Precipitation / Niederschlag**.
 
 Probabilities remain hourly probabilities; their maximum is not the probability of rain anywhere in the whole five-hour window. Amounts use the weather entity's precipitation unit and are summed only when all five values exist. Current UV is not a forecast or a medical recommendation.
 
-All original advanced layout options remain available. Existing YAML can be reused by changing `type`. The new overview uses content-driven height so information is not clipped by a fixed card height. Disable all three overview switches to retain the original fixed-height layout behavior.
+All original advanced layout options remain available. Existing YAML can be reused by changing `type`. The new overview uses content-driven height. Disabling all three overview switches removes the whole section, including its heading and spacing. Without an explicit `card_height`, the card continues to fit its content instead of falling back to 200 px.
+
+Enable **Compact tablet layout** (`compact: true`) in the editor for existing cards: horizontal value rows wrap, text can break, spacing shrinks and normal flow layouts use content height. The starter enables it by default. `compact: false` restores the configured scrolling and height without changing saved button settings. Freely positioned scenes retain their geometry; Home and Arc reserve scene space above the outlook (260 px when no fixed scene height is available). In Sections dashboards, use `grid_options: { columns: 12, rows: auto }` to avoid a dashboard-imposed empty area.
 
 ## Development
 

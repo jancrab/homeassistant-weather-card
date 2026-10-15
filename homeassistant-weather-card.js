@@ -1543,7 +1543,14 @@ class WeatherCard extends HTMLElement {
         this._initDOM();
         this._userCss.replaceSync(String(config.css || ''));
         const root = this._elements.root;
-        const heightMode = String(config.card_height == null ? '' : config.card_height).toLowerCase();
+        const hasFreeLayout = this._containers.some(container => freeStyle(container).length > 0);
+        const freeOnly = this._containers.length > 0 && this._containers.every(container => freeStyle(container).length > 0);
+        const heightMode = config.compact === true && !hasFreeLayout ? 'content' : String(config.card_height || 'content').toLowerCase();
+        root.classList.toggle('compact', config.compact === true && !hasFreeLayout);
+        root.classList.toggle('has-free-layout', hasFreeLayout);
+        root.classList.toggle('free-only', freeOnly);
+        const sceneHeight = ['content', 'auto', 'square'].includes(heightMode) ? '260px' : cssLength(config.card_height);
+        root.style.setProperty('--weather-scene-height', sceneHeight);
         if (heightMode === 'content' || heightMode === 'square') {
             this.style.height = 'auto'; this.style.minHeight = '0'; this.style.aspectRatio = heightMode === 'square' ? '1' : 'auto';
         } else if (heightMode === 'auto') {
@@ -1749,7 +1756,8 @@ class WeatherCard extends HTMLElement {
                     c._gaugeDefs = (s.type === 'ring' ? gaugeRefs(c, 'ring_') : []).concat(...(Array.isArray(s.elements) ? s.elements : []).filter(e => e && e.type === 'bar').map(e => gaugeRefs(e, 'bar_')), c._thresholdDef).filter(d => d.entity || d.attribute);
                     return c;
                 });
-                return { ...a, buttons };
+                // Compact mode is a presentation override; keep the saved layout untouched.
+                return { ...a, ...(config.compact === true && !freeStyle(a).length && a.layout === 'horizontal-scroll' ? { layout: 'wrap', scroll_count: undefined } : {}), buttons };
             });
         }
         return [];
@@ -2337,13 +2345,21 @@ class WeatherCard extends HTMLElement {
             #free-layer > .buttons-group.free-positioned.has-row-horizontal-scroll:not(.has-custom-width) { width: 100%; }
             #card-root.fixed-height #content-layer { position: absolute; inset: 0; height: 100%; }
             #card-root.has-outlook #content-layer { position: relative; height: auto; }
+            /* Absolute-only scenes need their own space above the in-flow outlook. */
+            #card-root.free-only.has-outlook #content-layer { padding-top: var(--weather-scene-height); }
+            #card-root.free-only.has-outlook #free-layer { bottom: auto; height: calc(var(--weather-scene-height) - 2 * var(--_origami-pad-v, var(--origami-card-padding, 16px))); }
+            #card-root.compact { --weather-outlook-header-gap: 8px; --weather-outlook-hour-padding: 10px; --weather-outlook-hour-gap: 6px; }
+            #card-root.compact #content-layer { padding: 12px 16px; }
+            #card-root.compact:not(.has-free-layout) #content-layer > .buttons-group:not(.has-image) { margin-block: 6px; }
+            #card-root.compact .buttons-row.row-wrap > .button:not(.free-positioned) { flex-shrink: 1; }
+            #card-root.compact .button .button-text { white-space: normal; overflow-wrap: anywhere; }
             ha-weather-outlook { order: 1000; flex: 0 0 auto; width: 100%; align-self: stretch; container-type: inline-size; }
             #content-layer.direction-row > ha-weather-outlook { flex-basis: 100%; }
             #card-root.fixed-height { --_origami-vscroll-fill: calc(100% - var(--_origami-pad-v, var(--origami-card-padding, 16px)) * 2); }
             #free-layer { position: absolute; inset: var(--_origami-pad-v, var(--origami-card-padding, 16px)) var(--_origami-pad-h, var(--origami-card-padding, 16px)); pointer-events: none; box-sizing: border-box; overflow: visible; z-index: 6; container-type: size; }
             #free-layer > .buttons-group.free-positioned { position: absolute; max-width: 100%; }
             #free-layer > .buttons-group.free-positioned.has-custom-width { width: var(--origami-container-width); }
-            .buttons-group { pointer-events: auto; min-width: 0; box-sizing: border-box; padding: var(--origami-container-padding, 0); margin: var(--origami-container-margin, 0); }
+            .buttons-group { pointer-events: auto; min-width: 0; max-width: 100%; box-sizing: border-box; padding: var(--origami-container-padding, 0); margin: var(--origami-container-margin, 0); }
             .buttons-group.has-image { display: grid; }
             .buttons-group.has-image > * { grid-area: 1 / 1; min-width: 0; }
             .group-image { width: 100%; height: auto; }

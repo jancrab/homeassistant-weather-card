@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { LAYOUT_PRESETS, instantiatePreset } from "./layout-presets.js";
 import { outlookLabels } from './weather-outlook.js';
+import { currentUV } from './weather-outlook-model.js';
 const LABELS = Object.freeze({
     weather_entity: "", sun_entity: "Sun entity",
     sun_moon_size: "Diameter", sun_moon_x: "Horizontal position", sun_moon_y: "Vertical position",
@@ -658,7 +659,7 @@ class WeatherCardEditor extends LitElement {
         const entity = current.weather_entity || "";
         const next = instantiatePreset(preset, entity);
         if (entity) next.weather_entity = entity;
-        for (const key of ["type", "name", "sun_entity", "icon_path", "show_hourly", "show_precipitation", "show_uv", "uv_entity", "details_mode"]) {
+        for (const key of ["type", "name", "sun_entity", "icon_path", "show_hourly", "show_precipitation", "show_uv", "uv_entity", "details_mode", "compact"]) {
             if (current[key] != null && current[key] !== "") next[key] = current[key];
         }
         this._patch(next, { replace: true });
@@ -2039,6 +2040,9 @@ class WeatherCardEditor extends LitElement {
         const c = this._config, t = outlookLabels(this.hass);
         return html`<div class="settings-group">
             <div class="toggle-group">
+                <label class="toggle-row" style="min-height:44px"><span>${t.compact}</span>
+                    <ha-switch aria-label=${t.compact} .checked=${c.compact === true || (c.compact !== false && !c.button_containers)}
+                        @change=${event => this._updateField('compact', event.target.checked)}></ha-switch></label>
                 ${['show_hourly', 'show_precipitation', 'show_uv'].map(key => html`
                     <label class="toggle-row" style="min-height:44px"><span>${t[key]}</span>
                     <ha-switch aria-label=${t[key]} .checked=${key === 'show_uv' ? c[key] === true : c[key] !== false}
@@ -2047,8 +2051,10 @@ class WeatherCardEditor extends LitElement {
                     <ha-switch aria-label=${t.always_details} .checked=${c.details_mode === 'always'}
                         @change=${event => this._updateField('details_mode', event.target.checked ? 'always' : 'toggle')}></ha-switch></label>
             </div>
+            <p class="button-nudge">${t.compact_help}</p>
             ${c.show_uv === true ? html`${this._renderEntityField('uv_entity', { domain: 'sensor', label: t.uv_entity })}
-                <p class="button-nudge">${t.uv_help}</p>` : ''}
+                <p class="button-nudge">${t.uv_help}</p>
+                ${currentUV(this.hass, c) === null ? html`<p class="button-nudge" role="status">${t.uv_missing}</p>` : ''}` : ''}
         </div>`;
     }
     render() {

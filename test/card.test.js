@@ -62,6 +62,7 @@ test('outlook renders five hours, zero precipitation, missing values and live am
     emit(forecast);
     await outlook.updateComplete;
     assert.equal(outlook.shadowRoot.querySelectorAll('.hours .hour').length, 5);
+    assert.equal(outlook.shadowRoot.querySelector('h3'), null, 'hourly forecast has no visible heading');
     assert.match(outlook.shadowRoot.querySelector('.rain').textContent, /0 mm/);
     forecast[2].precipitation = 1.5;
     emit(forecast);
@@ -82,6 +83,47 @@ test('outlook renders five hours, zero precipitation, missing values and live am
     outlook.shadowRoot.querySelector('button.more-info').click();
     assert.equal(entity, 'weather.home');
     outlook.remove();
+});
+
+test('disabling every feature removes the outlook and does not introduce an implicit fixed height', async () => {
+    const card = document.createElement('homeassistant-weather-card');
+    card._tryInitialize = () => {};
+    const config = { weather_entity: 'weather.home', button_containers: [{ buttons: [{ entity: 'weather.home' }] }] };
+    document.body.append(card);
+    card.hass = fixture().hass;
+    for (let mask = 0; mask < 8; mask++) {
+        card.setConfig({ ...config, show_hourly: !!(mask & 1), show_precipitation: !!(mask & 2), show_uv: !!(mask & 4) });
+        assert.equal(!!card.shadowRoot.querySelector('ha-weather-outlook'), mask !== 0);
+        assert.equal(card.style.height, 'auto');
+        assert.equal(card.style.minHeight, '0');
+        assert.equal(card.shadowRoot.querySelector('#card-root').classList.contains('fixed-height'), false);
+    }
+    const off = { ...config, show_hourly: false, show_precipitation: false, show_uv: false };
+    card.setConfig({ ...off, card_height: '320px' });
+    assert.equal(card.style.height, '320px', 'explicit height remains a user choice');
+    card.setConfig({ ...off, card_height: '320px', compact: true });
+    assert.equal(card.style.height, 'auto', 'compact mode overrides fixed height');
+    const outlook = new WeatherOutlook();
+    document.body.append(outlook);
+    outlook.setData(fixture().hass, off);
+    await outlook.updateComplete;
+    assert.equal(outlook.shadowRoot.querySelector('header'), null);
+    outlook.remove();
+    card.remove();
+});
+
+test('compact mode wraps scrolling value rows without changing the saved layout', () => {
+    const card = document.createElement('homeassistant-weather-card');
+    const config = { ...instantiatePreset(LAYOUT_PRESETS[0], 'weather.home'), weather_entity: 'weather.home', compact: true };
+    const saved = structuredClone(config);
+    card.setConfig(config);
+    assert.ok(card.shadowRoot.querySelector('#card-root.compact'));
+    assert.equal(card._containers[1].layout, 'wrap');
+    assert.deepEqual(config, saved);
+    card.setConfig({ ...config, compact: false });
+    assert.equal(card._containers[1].layout, 'horizontal-scroll');
+    assert.equal(card.shadowRoot.querySelector('#card-root.compact'), null);
+    card.remove();
 });
 
 test('editor bootstraps HA fields and toggles features while retaining custom configuration', async () => {
@@ -106,11 +148,19 @@ test('editor bootstraps HA fields and toggles features while retaining custom co
     editor._updateField('uv_entity', 'sensor.uv');
     editor._updateField('show_precipitation', false);
     editor._updateField('details_mode', 'always');
+    editor._updateField('compact', true);
     editor._applyPreset(LAYOUT_PRESETS[0]);
     assert.equal(config.show_uv, true);
     assert.equal(config.uv_entity, 'sensor.uv');
     assert.equal(config.show_precipitation, false);
     assert.equal(config.details_mode, 'always');
+    assert.equal(config.compact, true);
+    editor._updateField('uv_entity', 'sensor.missing');
+    await editor.updateComplete;
+    assert.match(editor.shadowRoot.querySelector('[role="status"]').textContent, /keinen UV-Wert/);
+    editor._updateField('uv_entity', '');
+    await editor.updateComplete;
+    assert.equal(editor.shadowRoot.querySelector('[role="status"]'), null, 'a measured weather UV value of zero is available');
     editor.remove();
 });
 
@@ -156,6 +206,11 @@ test('all original presets render with the overview last in reading order', asyn
         card.hass = fixture().hass;
         const content = card.shadowRoot.querySelector('#content-layer');
         assert.equal(content.lastElementChild.localName, 'ha-weather-outlook', preset.id);
+        if (['home', 'arc'].includes(preset.id)) {
+            const root = card.shadowRoot.querySelector('#card-root');
+            assert.equal(root.classList.contains('free-only'), true);
+            assert.equal(root.style.getPropertyValue('--weather-scene-height'), '260px');
+        }
         assert.ok(card.shadowRoot.querySelector('#weather-effects'), preset.id);
         card.remove();
     }

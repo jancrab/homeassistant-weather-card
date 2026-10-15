@@ -22,6 +22,9 @@
         <div><div id="preview"></div><p class="caption">Simulierte Wetterdaten · keine Verbindung zu Home Assistant</p></div>
         <aside>
             <h2>Vorschau ausprobieren</h2>
+            <label class="select">Layout<select id="preset"><option value="">Standard</option><option value="slim">Slim</option><option value="classic">Classic</option><option value="home">Home</option><option value="centered">Centered</option><option value="comparison">Comparison</option><option value="arc">Arc</option></select></label>
+            <label><input id="unset-height" type="checkbox">Ohne explizite Kartenhöhe</label>
+            <label><input id="compact" type="checkbox" checked>Kompaktes Tablet-Layout</label>
             <label><input id="dark" type="checkbox">Dunkles Theme</label>
             <label><input id="hourly" type="checkbox" checked>5-Stunden-Vorhersage</label>
             <label><input id="rain" type="checkbox" checked>Niederschlag</label>
@@ -57,6 +60,7 @@
     }
     customElements.define('ha-icon',DemoIcon);
     await import('../dist/homeassistant-weather-card.js');
+    const { LAYOUT_PRESETS, instantiatePreset } = await import('../layout-presets.js');
     const $=id=>document.getElementById(id);
     const card=document.createElement('homeassistant-weather-card');
     const callbacks=new Set();
@@ -84,9 +88,17 @@
             },
             themes:{darkMode:dark},locale:{language:$('language').value,time_format:'24',number_format:$('language').value==='de'?'decimal_comma':'comma_decimal',time_zone:'server'},
             config:{time_zone:'Europe/Berlin',latitude:52.52,longitude:13.4,unit_system:{temperature:imperial?'°F':'°C'}},
-            connection,localize:()=>'',formatEntityState:entity=>entity.state,formatEntityAttributeValue:(entity,attribute)=>String(entity.attributes[attribute]??'')
+            connection,localize:()=>'',formatEntityState:entity=>entity.state,formatEntityAttributeValue:(entity,attribute)=>{
+                const value = entity.attributes[attribute];
+                const unit = {temperature:entity.attributes.temperature_unit,wind_speed:entity.attributes.wind_speed_unit,humidity:'%'}[attribute];
+                return value == null ? '' : `${value}${unit ? ` ${unit}` : ''}`;
+            }
         };
-        card.setConfig({weather_entity:'weather.home',color_mode:'theme',show_hourly:$('hourly').checked,show_precipitation:$('rain').checked,show_uv:$('uv').checked,details_mode:$('details').checked?'always':'toggle'});
+        const preset = LAYOUT_PRESETS.find(p => p.id === $('preset').value);
+        const config = {...(preset ? instantiatePreset(preset, 'weather.home') : {}),weather_entity:'weather.home',color_mode:'theme',show_hourly:$('hourly').checked,show_precipitation:$('rain').checked,show_uv:$('uv').checked,details_mode:$('details').checked?'always':'toggle'};
+        if ($('unset-height').checked) delete config.card_height;
+        config.compact = $('compact').checked;
+        card.setConfig(config);
         card.hass=hass;
         if(!card.isConnected)$('preview').append(card);
         for(const cb of callbacks)cb({forecast:makeForecast()});
