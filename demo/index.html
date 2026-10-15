@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Weather Card · Simulierte Vorschau</title>
+    <style>
+        :root { color-scheme: light; --primary-text-color:#263342; --secondary-text-color:#657183; --primary-background-color:#edf1f4; --ha-card-background:#fff; --card-background-color:#fff; --divider-color:#dce2e7; --primary-color:#1679a2; --ha-card-border-radius:24px; --ha-card-border-width:1px; --ha-card-border-color:#d7dfe5; --ha-font-family-body:'Segoe UI',sans-serif; }
+        :root.dark { color-scheme:dark; --primary-text-color:#eef4fa; --secondary-text-color:#a5b4c5; --primary-background-color:#101721; --ha-card-background:#1b2735; --card-background-color:#1b2735; --divider-color:#344457; --primary-color:#79c5ed; --ha-card-border-color:#304053; }
+        * { box-sizing:border-box; } body { margin:0; background:var(--primary-background-color); color:var(--primary-text-color); font:14px/1.6 var(--ha-font-family-body); }
+        main { max-width:1080px; margin:64px auto; padding:0 32px; } .eyebrow { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--secondary-text-color); } h1 { font-weight:500; font-size:36px; line-height:1.2; letter-spacing:-.045em; margin:8px 0 12px; } .intro { color:var(--secondary-text-color); max-width:560px; margin-bottom:36px; }
+        .layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:64px; align-items:start; } #preview { width:100%; max-width:440px; margin:auto; } #preview.narrow { max-width:280px; } #preview.medium { max-width:360px; } #preview.wide { max-width:480px; } .caption { margin:16px 0; color:var(--secondary-text-color); font-size:11px; text-align:center; }
+        aside { border-top:1px solid var(--divider-color); padding-top:16px; } aside h2 { font-size:14px; font-weight:600; margin:0 0 16px; } label { display:flex; align-items:center; gap:12px; margin:14px 0; min-height:30px; } label.select { flex-direction:column; align-items:stretch; gap:6px; } input[type=checkbox] { accent-color:var(--primary-color); width:18px; height:18px; } select,button { min-height:44px; background:var(--ha-card-background); color:var(--primary-text-color); border:1px solid var(--divider-color); border-radius:10px; padding:8px 12px; font:inherit; } button { cursor:pointer; } :focus-visible { outline:2px solid var(--primary-color); outline-offset:3px; } #event { color:var(--secondary-text-color); font-size:12px; } .notice { font-size:12px; color:var(--secondary-text-color); border-top:1px solid var(--divider-color); margin-top:24px; padding-top:16px; }
+        @media(max-width:740px) { main { margin:32px auto; padding:0 20px; } .layout { grid-template-columns:1fr; gap:24px; } h1 { font-size:30px; } aside { max-width:440px; width:100%; margin:auto; } }
+    </style>
+</head>
+<body>
+<main>
+    <div class="eyebrow">Home Assistant Weather Card</div>
+    <h1>Das Wetter. Auf einen Blick.</h1>
+    <p class="intro">Die animierte Origami-Wetterszene, ergänzt um die nächsten fünf Stunden, Niederschlag und einen optionalen UV-Index.</p>
+    <div class="layout">
+        <div><div id="preview"></div><p class="caption">Simulierte Wetterdaten · keine Verbindung zu Home Assistant</p></div>
+        <aside>
+            <h2>Vorschau ausprobieren</h2>
+            <label><input id="dark" type="checkbox">Dunkles Theme</label>
+            <label><input id="hourly" type="checkbox" checked>5-Stunden-Vorhersage</label>
+            <label><input id="rain" type="checkbox" checked>Niederschlag</label>
+            <label><input id="uv" type="checkbox" checked>UV-Index</label>
+            <label class="select">Wetterszene<select id="scene"><option value="partlycloudy">Sonne und Wolken</option><option value="rainy">Regen</option><option value="snowy">Schnee</option><option value="clear-night">Klare Nacht</option></select></label>
+            <label class="select">Datenzustand<select id="data"><option value="normal">Vollständige Daten</option><option value="missing">Datenlücken</option><option value="unsupported">Keine stündliche Vorhersage</option><option value="error">Verbindungsfehler</option><option value="unavailable">Entität nicht verfügbar</option><option value="empty">Leere Vorhersage</option></select></label>
+            <label class="select">Kartenbreite<select id="width"><option value="">440 px</option><option value="narrow">280 px</option><option value="medium">360 px</option><option value="wide">480 px</option></select></label>
+            <label><input id="imperial" type="checkbox">°F und Zoll</label>
+            <label class="select">Sprache<select id="language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
+            <div id="event" role="status"></div>
+            <p class="notice">Vorschau-Icons und HA-Zustände werden lokal simuliert. Die Produktionskarte verwendet die nativen Home-Assistant-Komponenten. Die Original-Animationen laufen aus dem gebauten Bundle.</p>
+        </aside>
+    </div>
+</main>
+<script type="module">
+    // Small local icon stand-in for the HA component, only used by this demo.
+    const cloud = '<path d="M6 18h12a4 4 0 0 0 0-8 6 6 0 0 0-11-2 5 5 0 0 0-1 10Z"/>';
+    class DemoIcon extends HTMLElement {
+        static observedAttributes=['icon'];
+        constructor(){super();this.attachShadow({mode:'open'});}
+        connectedCallback(){this.draw();} attributeChangedCallback(){this.draw();}
+        draw(){const name=this.getAttribute('icon')||'';let path=cloud;
+            if(name.includes('sunny')) path='<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>';
+            if(name.includes('rain')||name.includes('pouring')) path=cloud+'<path d="m8 20-1 2m6-2-1 2m6-2-1 2"/>';
+            if(name.includes('water')) path='<path d="M12 3s-6 7-6 12a6 6 0 0 0 12 0c0-5-6-12-6-12Z"/>';
+            if(name.includes('night')) path='<path d="M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z"/>';
+            if(name.includes('arrow-top-right')) path='<path d="M6 18 18 6M6 6h12v12"/>';
+            if(name.includes('help')) path='<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v1"/>';
+            this.shadowRoot.innerHTML='<style>:host{display:inline-flex;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);vertical-align:middle}svg{width:100%;height:100%}</style><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
+        }
+    }
+    customElements.define('ha-icon',DemoIcon);
+    await import('../dist/homeassistant-weather-card.js');
+    const $=id=>document.getElementById(id);
+    const card=document.createElement('homeassistant-weather-card');
+    const callbacks=new Set();
+    let connection, lastMode;
+    function makeForecast(){
+        const start=Math.ceil(Date.now()/3600000)*3600000;
+        const imperial=$('imperial').checked;
+        const result=Array.from({length:8},(_,i)=>({datetime:new Date(start+i*3600000).toISOString(),temperature:imperial?[64,63,61,59,57][i%5]:[18,17,16,15,14][i%5],condition:['partlycloudy','cloudy','rainy','rainy','partlycloudy'][i%5],precipitation:imperial?[0,0,.04,.02,0][i%5]:[0,0,1.2,.6,0][i%5],precipitation_probability:[5,20,75,60,15][i%5]}));
+        if($('data').value==='missing'){result.splice(1,1);delete result[2].precipitation;delete result[3].precipitation_probability;}
+        return $('data').value==='empty'?[]:result;
+    }
+    function update(){
+        const mode=$('data').value, dark=$('dark').checked, imperial=$('imperial').checked;
+        if(!connection||mode!==lastMode){
+            connection={subscribeMessage:async(cb)=>{if(mode==='error')throw new Error('Simulated connection error');callbacks.add(cb);queueMicrotask(()=>cb({forecast:makeForecast()}));return()=>callbacks.delete(cb);}};
+            lastMode=mode;
+        }
+        document.documentElement.classList.toggle('dark',dark);
+        $('preview').className=$('width').value;
+        const scene=$('scene').value;
+        const hass={
+            states:{
+                'weather.home':{entity_id:'weather.home',state:mode==='unavailable'?'unavailable':scene,attributes:{friendly_name:'Zuhause · Berlin',temperature:imperial?64:18,temperature_unit:imperial?'°F':'°C',precipitation_unit:imperial?'in':'mm',supported_features:mode==='unsupported'?1:3,humidity:62,wind_speed:12,wind_speed_unit:'km/h',uv_index:mode==='missing'?null:2.4}},
+                'sun.sun':{entity_id:'sun.sun',state:scene==='clear-night'?'below_horizon':'above_horizon',attributes:{elevation:scene==='clear-night'?-20:28,azimuth:210,next_rising:new Date(Date.now()+12*3600000).toISOString(),next_setting:new Date(Date.now()+4*3600000).toISOString()}}
+            },
+            themes:{darkMode:dark},locale:{language:$('language').value,time_format:'24',number_format:$('language').value==='de'?'decimal_comma':'comma_decimal',time_zone:'server'},
+            config:{time_zone:'Europe/Berlin',latitude:52.52,longitude:13.4,unit_system:{temperature:imperial?'°F':'°C'}},
+            connection,localize:()=>'',formatEntityState:entity=>entity.state,formatEntityAttributeValue:(entity,attribute)=>String(entity.attributes[attribute]??'')
+        };
+        card.setConfig({weather_entity:'weather.home',color_mode:'theme',show_hourly:$('hourly').checked,show_precipitation:$('rain').checked,show_uv:$('uv').checked});
+        card.hass=hass;
+        if(!card.isConnected)$('preview').append(card);
+        for(const cb of callbacks)cb({forecast:makeForecast()});
+    }
+    card.addEventListener('hass-more-info',()=>{$('event').textContent='In Home Assistant öffnet sich hier der Wetterdialog.';});
+    document.querySelectorAll('input,select').forEach(el=>el.addEventListener('change',update));
+    update();
+</script>
+</body></html>

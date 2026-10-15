@@ -698,7 +698,21 @@ export const rebindPresetEntities = (value, entity) => {
 
 export const instantiatePreset = (preset, entity) => rebindPresetEntities(deepClone(preset.config), entity);
 
-export const buildStubConfig = (hass) => {
-    const entity = hass ? Object.keys(hass.states).find((e) => e.startsWith('weather.')) || 'weather.home' : 'weather.home';
-    return { weather_entity: entity, ...instantiatePreset(LAYOUT_PRESETS[0], entity) };
+export const buildStubConfig = (hass, weatherEntity) => {
+    const entity = weatherEntity || (hass ? Object.keys(hass.states).find((e) => e.startsWith('weather.')) : null) || 'weather.home';
+    return {
+        weather_entity: entity, card_height: 'content', card_padding: '20px',
+        sun_moon_x: 'dynamic', sun_moon_size: 80,
+        show_hourly: true, show_precipitation: true, show_uv: false,
+        button_containers: [{
+            margin: '24px 0 20px', button_text_size: '48px', button_icon_size: '42px', button_gap: '12px',
+            buttons: [{ entity, style: 'inline', elements: [
+                { type: 'icon', icon: 'weather' },
+                { type: 'text', attribute: 'temperature', precision: 0, weight: '500', fancy_unit: true }
+            ] }]
+        }, {
+            button_text_size: '14px',
+            buttons: [{ entity, elements: [{ type: 'text', attribute: 'friendly_name' }] }]
+        }]
+    };
 };

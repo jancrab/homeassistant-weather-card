@@ -1,5 +1,5 @@
 {
-  "name": "Origami Weather",
+  "name": "Home Assistant Weather Card",
   "render_readme": true,
-  "filename": "origami-weather.js"
+  "filename": "homeassistant-weather-card.js"
 }
