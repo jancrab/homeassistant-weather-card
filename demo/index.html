@@ -26,6 +26,7 @@
             <label><input id="hourly" type="checkbox" checked>5-Stunden-Vorhersage</label>
             <label><input id="rain" type="checkbox" checked>Niederschlag</label>
             <label><input id="uv" type="checkbox" checked>UV-Index</label>
+            <label><input id="details" type="checkbox">Details immer anzeigen</label>
             <label class="select">Wetterszene<select id="scene"><option value="partlycloudy">Sonne und Wolken</option><option value="rainy">Regen</option><option value="snowy">Schnee</option><option value="clear-night">Klare Nacht</option></select></label>
             <label class="select">Datenzustand<select id="data"><option value="normal">Vollständige Daten</option><option value="missing">Datenlücken</option><option value="unsupported">Keine stündliche Vorhersage</option><option value="error">Verbindungsfehler</option><option value="unavailable">Entität nicht verfügbar</option><option value="empty">Leere Vorhersage</option></select></label>
             <label class="select">Kartenbreite<select id="width"><option value="">440 px</option><option value="narrow">280 px</option><option value="medium">360 px</option><option value="wide">480 px</option></select></label>
@@ -49,6 +50,7 @@
             if(name.includes('water')) path='<path d="M12 3s-6 7-6 12a6 6 0 0 0 12 0c0-5-6-12-6-12Z"/>';
             if(name.includes('night')) path='<path d="M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z"/>';
             if(name.includes('arrow-top-right')) path='<path d="M6 18 18 6M6 6h12v12"/>';
+            if(name.includes('chevron-down')) path='<path d="m6 9 6 6 6-6"/>';
             if(name.includes('help')) path='<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v1"/>';
             this.shadowRoot.innerHTML='<style>:host{display:inline-flex;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);vertical-align:middle}svg{width:100%;height:100%}</style><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
         }
@@ -84,7 +86,7 @@
             config:{time_zone:'Europe/Berlin',latitude:52.52,longitude:13.4,unit_system:{temperature:imperial?'°F':'°C'}},
             connection,localize:()=>'',formatEntityState:entity=>entity.state,formatEntityAttributeValue:(entity,attribute)=>String(entity.attributes[attribute]??'')
         };
-        card.setConfig({weather_entity:'weather.home',color_mode:'theme',show_hourly:$('hourly').checked,show_precipitation:$('rain').checked,show_uv:$('uv').checked});
+        card.setConfig({weather_entity:'weather.home',color_mode:'theme',show_hourly:$('hourly').checked,show_precipitation:$('rain').checked,show_uv:$('uv').checked,details_mode:$('details').checked?'always':'toggle'});
         card.hass=hass;
         if(!card.isConnected)$('preview').append(card);
         for(const cb of callbacks)cb({forecast:makeForecast()});

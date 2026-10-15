@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Bugs only — for ideas or "how do I…" questions, use Discussions. The card YAML is required: without it I can't reproduce your issue.
+        Report a problem with this card below. Include the card YAML so the issue can be reproduced. For feature ideas or setup questions, open a blank issue.
 
   - type: checkboxes
     id: preflight
@@ -37,7 +37,7 @@ body:
     id: versions
     attributes:
       label: Card version and Home Assistant version
-      placeholder: e.g. card 2.4.1, HA 2026.7.2
+      placeholder: e.g. card 0.1.0, HA 2026.10.1
     validations:
       required: true
 

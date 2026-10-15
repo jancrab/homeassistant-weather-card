@@ -703,7 +703,7 @@ export const buildStubConfig = (hass, weatherEntity) => {
     return {
         weather_entity: entity, card_height: 'content', card_padding: '20px',
         sun_moon_x: 'dynamic', sun_moon_size: 80,
-        show_hourly: true, show_precipitation: true, show_uv: false,
+        show_hourly: true, show_precipitation: true, show_uv: false, details_mode: 'toggle',
         button_containers: [{
             margin: '24px 0 20px', button_text_size: '48px', button_icon_size: '42px', button_gap: '12px',
             buttons: [{ entity, style: 'inline', elements: [

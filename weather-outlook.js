@@ -12,6 +12,8 @@ export const OUTLOOK_LABELS = {
         chance: 'Probability', amount: 'Amount', total: 'Total over 5 hours', maximum: 'Highest hourly probability',
         partial: 'Some hours have no data', unitMissing: 'Precipitation unit unavailable', uv: 'UV index', current: 'Current',
         source: 'Weather entity', details: 'Weather details', from: 'Precipitation from',
+        expand: 'Show details', collapse: 'Hide details', details_short: 'Details', less: 'Less',
+        always_details: 'Always show details', native_details: 'Open weather entity',
         sunny: 'Sunny', cloudy: 'Cloudy', partlycloudy: 'Partly cloudy', rainy: 'Rain', pouring: 'Heavy rain',
         snowy: 'Snow', 'snowy-rainy': 'Sleet', 'clear-night': 'Clear night', fog: 'Fog', hail: 'Hail',
         lightning: 'Thunderstorms', 'lightning-rainy': 'Rain and thunderstorms', windy: 'Windy', 'windy-variant': 'Wind and clouds', exceptional: 'Exceptional'
@@ -26,6 +28,8 @@ export const OUTLOOK_LABELS = {
         chance: 'Wahrscheinlichkeit', amount: 'Menge', total: 'Summe über 5 Stunden', maximum: 'Höchste stündliche Wahrscheinlichkeit',
         partial: 'Für einzelne Stunden fehlen Daten', unitMissing: 'Niederschlagseinheit nicht verfügbar', uv: 'UV-Index', current: 'Aktuell',
         source: 'Wetterentität', details: 'Wetterdetails', from: 'Niederschlag ab',
+        expand: 'Details anzeigen', collapse: 'Details ausblenden', details_short: 'Details', less: 'Weniger',
+        always_details: 'Details immer anzeigen', native_details: 'Wetterentität öffnen',
         sunny: 'Sonnig', cloudy: 'Bewölkt', partlycloudy: 'Teils bewölkt', rainy: 'Regen', pouring: 'Starkregen',
         snowy: 'Schnee', 'snowy-rainy': 'Schneeregen', 'clear-night': 'Klare Nacht', fog: 'Nebel', hail: 'Hagel',
         lightning: 'Gewitter', 'lightning-rainy': 'Regen und Gewitter', windy: 'Windig', 'windy-variant': 'Wind und Wolken', exceptional: 'Außergewöhnlich'
@@ -44,6 +48,7 @@ export class WeatherOutlook extends LitElement {
     constructor() {
         super();
         this.config = {};
+        this._expanded = false;
         this.forecasts = new HourlyForecastSubscription(() => this.requestUpdate());
         this.addEventListener('click', event => event.stopPropagation());
     }
@@ -58,6 +63,7 @@ export class WeatherOutlook extends LitElement {
         this.forecasts.stop();
     }
     setData(hass, config) {
+        if (config.weather_entity !== this.config.weather_entity || config.details_mode !== this.config.details_mode) this._expanded = false;
         this.hass = hass;
         this.config = config;
         this._sync();
@@ -72,6 +78,10 @@ export class WeatherOutlook extends LitElement {
         this.dispatchEvent(new CustomEvent('hass-more-info', {
             bubbles: true, composed: true, detail: { entityId: this.config.weather_entity }
         }));
+    }
+    _toggleDetails() {
+        this._expanded = !this._expanded;
+        this.requestUpdate();
     }
     _time(time) {
         const locale = this.hass?.locale || {};
@@ -101,9 +111,17 @@ export class WeatherOutlook extends LitElement {
         const wantsForecast = c.show_hourly !== false || c.show_precipitation !== false;
         const status = this.forecasts.status;
         const uv = currentUV(this.hass, c);
+        const hasDetails = c.show_precipitation !== false || c.show_uv === true;
+        const expanded = c.details_mode === 'always' || this._expanded;
         return html`
+            <header>
+                <h3>${wantsForecast ? t.heading : t.details}</h3>
+                ${hasDetails && c.details_mode !== 'always' ? html`
+                    <button class="details-toggle" @click=${this._toggleDetails} aria-expanded=${String(expanded)} aria-controls="outlook-details" aria-label=${expanded ? t.collapse : t.expand}>
+                        ${expanded ? t.less : t.details_short}<ha-icon icon="mdi:chevron-down" class=${expanded ? 'rotated' : ''}></ha-icon>
+                    </button>` : html`<button class="more-info" @click=${this._moreInfo} aria-label=${t.native_details}><ha-icon icon="mdi:arrow-top-right"></ha-icon></button>`}
+            </header>
             ${wantsForecast ? html`
-                <header><h3>${t.heading}</h3><button class="details" @click=${this._moreInfo} aria-label=${t.details}><ha-icon icon="mdi:arrow-top-right"></ha-icon></button></header>
                 ${status !== 'ready' || !hours.length ? html`
                     <div class="status" role="status">${t[status] || t.empty}
                         ${status === 'error' || status === 'ready' ? html`<button @click=${() => this.forecasts.retry()}>${t.retry}</button>` : nothing}
@@ -115,15 +133,22 @@ export class WeatherOutlook extends LitElement {
                                     <time datetime=${new Date(hour.time).toISOString()}>${this._time(hour.time)}</time>
                                     <ha-icon class="condition" icon=${`mdi:${weatherIcons[hour.condition] || 'help-circle-outline'}`} role="img" aria-label=${t[hour.condition] || t.missing}></ha-icon>
                                     <strong class="temperature">${this._number(hour.temperature, 0)}<span>${hour.temperature !== null ? temperatureUnit : ''}</span></strong>
-                                    ${c.show_precipitation !== false ? html`
-                                        <span class="probability" title=${t.chance} aria-label=${`${t.chance}: ${hour.probability === null ? t.missing : this._number(hour.probability, 0) + '%'}`}><ha-icon icon="mdi:water-outline"></ha-icon>${hour.probability === null ? '—' : this._number(hour.probability, 0) + '%'}</span>
-                                        <span class="amount" title=${rainUnit ? t.amount : t.unitMissing}>${rainUnit && hour.precipitation !== null ? `${this._number(hour.precipitation, 2)} ${rainUnit}` : '—'}</span>
-                                    ` : nothing}
                                 </div>`)}
                         </div>` : nothing}
-                    ${c.show_precipitation !== false ? html`
+                `}
+            ` : nothing}
+            ${hasDetails ? html`<div id="outlook-details" class=${`details-region ${expanded ? 'expanded' : ''}`} role="region" aria-label=${t.details} aria-hidden=${String(!expanded)} ?inert=${!expanded}>
+                <div class="details-inner">
+                    ${c.show_precipitation !== false && status === 'ready' && hours.length ? html`
                         <section class="rain" aria-label=${t.precipitation}>
                             <div class="rain-title"><ha-icon icon="mdi:weather-rainy"></ha-icon><span>${summary.firstWet ? `${t.from} ${this._time(summary.firstWet.time)}` : t.precipitation}</span></div>
+                            <div class="rain-hours" role="list" aria-label=${t.precipitation}>
+                                ${hours.map(hour => html`<div class="hour" role="listitem">
+                                    <time datetime=${new Date(hour.time).toISOString()}>${this._time(hour.time)}</time>
+                                    <span class="probability" title=${t.chance} aria-label=${`${t.chance}: ${hour.probability === null ? t.missing : this._number(hour.probability, 0) + '%'}`}><ha-icon icon="mdi:water-outline"></ha-icon>${hour.probability === null ? '—' : this._number(hour.probability, 0) + '%'}</span>
+                                    <span class="amount" title=${rainUnit ? t.amount : t.unitMissing}>${rainUnit && hour.precipitation !== null ? `${this._number(hour.precipitation, 2)} ${rainUnit}` : '—'}</span>
+                                </div>`)}
+                            </div>
                             <div class="metrics">
                                 <div><strong>${summary.total === null || !rainUnit ? '—' : `${this._number(summary.total, 2)} ${rainUnit}`}</strong><span>${t.total}</span></div>
                                 <div><strong>${summary.maximumProbability === null ? '—' : `${this._number(summary.maximumProbability, 0)}%`}</strong><span>${t.maximum}</span></div>
@@ -132,14 +157,15 @@ export class WeatherOutlook extends LitElement {
                             ${!rainUnit ? html`<p class="note">${t.unitMissing}</p>` : nothing}
                             ${summary.total === null || !summary.completeProbability ? html`<p class="note">${t.partial}</p>` : nothing}
                         </section>` : nothing}
-                `}
-            ` : nothing}
             ${c.show_uv === true ? html`
                 <section class="uv" aria-label=${t.uv}>
                     <ha-icon icon="mdi:weather-sunny-alert"></ha-icon>
                     <div><span>${t.uv}</span><small>${t.current} · ${c.uv_entity ? (this.hass.states[c.uv_entity]?.attributes?.friendly_name || c.uv_entity) : t.source}</small></div>
                     <strong>${uv === null ? t.missing : this._number(uv)}</strong>
                 </section>` : nothing}
+                    <button class="more-info entity-link" @click=${this._moreInfo}>${t.native_details}<ha-icon icon="mdi:arrow-top-right"></ha-icon></button>
+                </div>
+            </div>` : nothing}
         `;
     }
     static styles = css`
@@ -149,7 +175,14 @@ export class WeatherOutlook extends LitElement {
         button { min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; cursor: pointer; padding: 8px 12px; }
         button:hover { background: var(--outlook-line); }
         button:focus-visible { outline: 2px solid var(--primary-color, currentColor); outline-offset: 2px; }
-        .details { width: 44px; padding: 10px; }
+        .more-info { min-width: 44px; padding: 10px; }
+        .details-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; font-size: 12px; padding: 8px; }
+        .details-toggle ha-icon { --mdc-icon-size: 16px; transition: transform 240ms ease; }
+        .details-toggle .rotated { transform: rotate(180deg); }
+        .details-region { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 240ms ease, opacity 180ms ease; }
+        .details-region.expanded { grid-template-rows: 1fr; opacity: 1; }
+        .details-inner { min-height: 0; overflow: hidden; }
+        .entity-link { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 11px; color: var(--outlook-muted); }
         ha-icon { --mdc-icon-size: 20px; }
         .hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 14px 0; margin-bottom: 12px; border-radius: 14px; background: color-mix(in srgb, var(--_scheme-bg, var(--ha-card-background, white)) 60%, transparent); }
         .hour { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; padding: 0 2px; }
@@ -164,6 +197,7 @@ export class WeatherOutlook extends LitElement {
         .rain { background: var(--outlook-surface); padding: 14px 16px; border-radius: 16px; border: 1px solid var(--outlook-line); }
         .rain-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
         .rain-title ha-icon { color: var(--outlook-rain); }
+        .rain-hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 16px -8px; }
         .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
         .metrics div { display: flex; flex-direction: column; gap: 4px; }
         .metrics strong { font-size: 20px; font-weight: 500; }

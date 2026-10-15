@@ -61,7 +61,7 @@ test('outlook renders five hours, zero precipitation, missing values and live am
     const forecast = Array.from({ length: 5 }, (_, i) => ({ datetime: new Date(start + i * 3600000).toISOString(), temperature: 12 + i, precipitation: 0, precipitation_probability: 0, condition: 'sunny' }));
     emit(forecast);
     await outlook.updateComplete;
-    assert.equal(outlook.shadowRoot.querySelectorAll('.hour').length, 5);
+    assert.equal(outlook.shadowRoot.querySelectorAll('.hours .hour').length, 5);
     assert.match(outlook.shadowRoot.querySelector('.rain').textContent, /0 mm/);
     forecast[2].precipitation = 1.5;
     emit(forecast);
@@ -79,7 +79,7 @@ test('outlook renders five hours, zero precipitation, missing values and live am
     assert.equal(outlook.shadowRoot.querySelector('.uv'), null);
     let entity;
     outlook.addEventListener('hass-more-info', event => { entity = event.detail.entityId; });
-    outlook.shadowRoot.querySelector('button.details').click();
+    outlook.shadowRoot.querySelector('button.more-info').click();
     assert.equal(entity, 'weather.home');
     outlook.remove();
 });
@@ -105,11 +105,46 @@ test('editor bootstraps HA fields and toggles features while retaining custom co
     assert.ok(editor.shadowRoot.textContent.includes('Verwendet den UV-Index'));
     editor._updateField('uv_entity', 'sensor.uv');
     editor._updateField('show_precipitation', false);
+    editor._updateField('details_mode', 'always');
     editor._applyPreset(LAYOUT_PRESETS[0]);
     assert.equal(config.show_uv, true);
     assert.equal(config.uv_entity, 'sensor.uv');
     assert.equal(config.show_precipitation, false);
+    assert.equal(config.details_mode, 'always');
     editor.remove();
+});
+
+test('touch disclosure preserves the overview and live updates, resets on entity change, and supports always-open mode', async () => {
+    const { hass } = fixture();
+    const outlook = new WeatherOutlook();
+    document.body.append(outlook);
+    const config = { weather_entity: 'weather.home', show_uv: true };
+    outlook.setData(hass, config);
+    await outlook.updateComplete;
+    const region = () => outlook.shadowRoot.querySelector('#outlook-details');
+    const button = () => outlook.shadowRoot.querySelector('.details-toggle');
+    assert.equal(button().getAttribute('aria-expanded'), 'false');
+    assert.equal(region().hasAttribute('inert'), true);
+    button().click();
+    await outlook.updateComplete;
+    assert.equal(button().getAttribute('aria-expanded'), 'true');
+    assert.equal(region().hasAttribute('inert'), false);
+    const sameButton = button();
+    outlook.setData(hass, { ...config });
+    await outlook.updateComplete;
+    assert.equal(button(), sameButton);
+    assert.equal(button().getAttribute('aria-expanded'), 'true');
+    button().click();
+    await outlook.updateComplete;
+    assert.equal(region().getAttribute('aria-hidden'), 'true');
+    outlook.setData(hass, { ...config, details_mode: 'always' });
+    await outlook.updateComplete;
+    assert.equal(button(), null);
+    assert.equal(region().getAttribute('aria-hidden'), 'false');
+    outlook.setData(hass, { ...config, weather_entity: 'weather.other' });
+    await outlook.updateComplete;
+    assert.equal(button().getAttribute('aria-expanded'), 'false');
+    outlook.remove();
 });
 
 test('all original presets render with the overview last in reading order', async () => {

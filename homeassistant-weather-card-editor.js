@@ -658,7 +658,7 @@ class WeatherCardEditor extends LitElement {
         const entity = current.weather_entity || "";
         const next = instantiatePreset(preset, entity);
         if (entity) next.weather_entity = entity;
-        for (const key of ["type", "name", "sun_entity", "icon_path", "show_hourly", "show_precipitation", "show_uv", "uv_entity"]) {
+        for (const key of ["type", "name", "sun_entity", "icon_path", "show_hourly", "show_precipitation", "show_uv", "uv_entity", "details_mode"]) {
             if (current[key] != null && current[key] !== "") next[key] = current[key];
         }
         this._patch(next, { replace: true });
@@ -2043,6 +2043,9 @@ class WeatherCardEditor extends LitElement {
                     <label class="toggle-row" style="min-height:44px"><span>${t[key]}</span>
                     <ha-switch aria-label=${t[key]} .checked=${key === 'show_uv' ? c[key] === true : c[key] !== false}
                         @change=${event => this._updateField(key, event.target.checked)}></ha-switch></label>`)}
+                <label class="toggle-row" style="min-height:44px"><span>${t.always_details}</span>
+                    <ha-switch aria-label=${t.always_details} .checked=${c.details_mode === 'always'}
+                        @change=${event => this._updateField('details_mode', event.target.checked ? 'always' : 'toggle')}></ha-switch></label>
             </div>
             ${c.show_uv === true ? html`${this._renderEntityField('uv_entity', { domain: 'sensor', label: t.uv_entity })}
                 <p class="button-nudge">${t.uv_help}</p>` : ''}

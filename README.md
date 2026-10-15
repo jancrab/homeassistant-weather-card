@@ -9,6 +9,15 @@ An independent extension of [Origami Weather by hazymorning](https://github.com/
 - Optional **current UV index**, enabled with a switch in the visual editor. Uses the weather entity or an explicitly chosen sensor.
 - Three quick editor switches above the original advanced editor. New UI labels support German and English.
 - Own element name allows installation alongside the original card.
+- Compact overview by default; tap **Details** to smoothly reveal precipitation and optional UV without leaving the card. The choice stays open during live updates. Set `details_mode: always` to keep details visible.
+
+## Install with HACS
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jancrab&repository=homeassistant-weather-card&category=plugin)
+
+Add `https://github.com/jancrab/homeassistant-weather-card` to HACS custom repositories with type **Dashboard**, then download **Home Assistant Weather Card**. Reload your browser. If HACS has not registered the resource automatically, add `/hacsfiles/homeassistant-weather-card/homeassistant-weather-card.js` as a JavaScript module.
+
+The [latest release](https://github.com/jancrab/homeassistant-weather-card/releases/latest) includes the single-file bundle for manual installation. The repository is a HACS custom repository; it is not part of the default HACS catalog.
 
 ## Local installation
 
@@ -20,6 +29,7 @@ weather_entity: weather.home
 show_hourly: true
 show_precipitation: true
 show_uv: false
+details_mode: toggle # default: tap Details; use always for permanently visible details
 ```
 
 To enable an optional UV sensor:
@@ -53,7 +63,7 @@ The build bundles the editor, Lit and animation assets into one locally hosted J
 
 ## HACS and releases
 
-This local repository includes HACS metadata and validation/release workflows. Once an authorized public repository exists, add its URL as a HACS custom **Dashboard** repository. No hosted repository or release is claimed by these instructions.
+HACS metadata and validation/release workflows are included. [Tablet setup](docs/tablet-setup.md) contains a ready-to-paste configuration and a lighter animation variant.
 
 For a release, update the package and lock version and changelog, run checks, commit the built file, and push a matching `vX.Y.Z` tag to the authorized repository. The workflow checks that version and publishes the JS asset.
 
