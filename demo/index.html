@@ -26,6 +26,7 @@
             <label><input id="unset-height" type="checkbox">Ohne explizite Kartenhöhe</label>
             <label><input id="compact" type="checkbox" checked>Kompaktes Tablet-Layout</label>
             <label><input id="dark" type="checkbox">Dunkles Theme</label>
+            <label class="select">Kartenfarben<select id="color-mode"><option value="dark">Immer dunkel</option><option value="theme">Theme folgen</option><option value="sun">Sonne folgen</option></select></label>
             <label><input id="hourly" type="checkbox" checked>5-Stunden-Vorhersage</label>
             <label><input id="rain" type="checkbox" checked>Niederschlag</label>
             <label><input id="uv" type="checkbox" checked>UV-Index</label>
@@ -98,6 +99,7 @@
         const config = {...(preset ? instantiatePreset(preset, 'weather.home') : {}),weather_entity:'weather.home',color_mode:'theme',show_hourly:$('hourly').checked,show_precipitation:$('rain').checked,show_uv:$('uv').checked,details_mode:$('details').checked?'always':'toggle'};
         if ($('unset-height').checked) delete config.card_height;
         config.compact = $('compact').checked;
+        config.color_mode = $('color-mode').value;
         card.setConfig(config);
         card.hass=hass;
         if(!card.isConnected)$('preview').append(card);

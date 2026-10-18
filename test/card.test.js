@@ -52,6 +52,34 @@ test('card has its own identity and updates optional UV even with reused hass ob
     card.remove();
 });
 
+test('default dark palette stays dark through day/night while astronomy and explicit modes stay independent', () => {
+    const card = document.createElement('homeassistant-weather-card');
+    card._tryInitialize = () => {};
+    document.body.append(card);
+    const { hass } = fixture();
+    for (const withContainers of [false, true]) {
+        const config = { weather_entity: 'weather.home', ...(withContainers ? { button_containers: [] } : {}) };
+        for (const night of [false, true]) {
+            hass.states['sun.sun'] = { ...hass.states['sun.sun'], state: night ? 'below_horizon' : 'above_horizon' };
+            card.setConfig(config);
+            card.hass = hass;
+            assert.equal(card._schemeDark, true);
+            assert.equal(card._isAstroNight, night);
+            assert.ok(card.shadowRoot.querySelector('#card-root.scheme-dark.theme-mismatch'));
+            card.setConfig({ ...config, color_mode: 'sun' });
+            assert.equal(card._schemeDark, night);
+            card.setConfig({ ...config, color_mode: 'theme' });
+            assert.equal(card._schemeDark, false);
+        }
+    }
+    delete hass.states['sun.sun'];
+    card.setConfig({ weather_entity: 'weather.home', color_mode: 'dark' });
+    card.hass = hass;
+    assert.equal(card._schemeDark, true);
+    assert.ok(!card._sunWarned, 'a fixed palette does not require a sun entity');
+    card.remove();
+});
+
 test('outlook renders five hours, zero precipitation, missing values and live amount changes', async () => {
     const { hass, emit } = fixture();
     const outlook = new WeatherOutlook();
@@ -149,12 +177,17 @@ test('editor bootstraps HA fields and toggles features while retaining custom co
     editor._updateField('show_precipitation', false);
     editor._updateField('details_mode', 'always');
     editor._updateField('compact', true);
+    editor._updateField('color_mode', 'dark');
     editor._applyPreset(LAYOUT_PRESETS[0]);
     assert.equal(config.show_uv, true);
     assert.equal(config.uv_entity, 'sensor.uv');
     assert.equal(config.show_precipitation, false);
     assert.equal(config.details_mode, 'always');
     assert.equal(config.compact, true);
+    assert.equal(config.color_mode, 'dark');
+    await editor.updateComplete;
+    const colorForm = [...editor.shadowRoot.querySelectorAll('ha-form')].find(form => form.schema?.some(field => field.name === 'color_mode'));
+    assert.equal(colorForm.schema.find(field => field.name === 'color_mode').selector.select.options[0].label, 'Immer dunkel');
     editor._updateField('uv_entity', 'sensor.missing');
     await editor.updateComplete;
     assert.match(editor.shadowRoot.querySelector('[role="status"]').textContent, /keinen UV-Wert/);

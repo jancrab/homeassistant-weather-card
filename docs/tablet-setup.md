@@ -13,7 +13,7 @@ Im Dashboard eine manuelle Karte hinzufügen und folgende YAML einfügen. `weath
 ```yaml
 type: custom:homeassistant-weather-card
 weather_entity: weather.home
-color_mode: theme
+color_mode: dark
 card_height: content
 card_padding: 16px
 compact: true
@@ -55,6 +55,8 @@ Slim enthält aus der Originalvorlage einen separaten UV-Button mit Tagesprognos
 `grid_options` gilt für eine **Sections-/Abschnitte-Ansicht**; in anderen Ansichtstypen kann dieser Block entfallen. Eine ausreichend breite Section ist für die fünf Zeitspalten günstiger als mehrere eng gepackte Wetterkarten. Die Karte passt sich ihrer tatsächlichen Breite an und wächst beim Öffnen der Details. Benachbarte Cards rücken entsprechend nach unten.
 
 ## 3. Schwächeres Tablet
+
+Ab Version 0.1.2 bleibt die Karte standardmäßig auch tagsüber dunkel. In einer bestehenden Konfiguration `color_mode: theme` oder `color_mode: sun` durch `color_mode: dark` ersetzen, alternativ im Farbmodus **Immer dunkel** auswählen. Sonne, Mond und Wetteranimationen richten sich weiterhin nach den echten Zuständen. Der Bildschirm selbst wird dadurch nicht gedimmt.
 
 Diese optionalen Einstellungen reduzieren dekorative Effekte und behalten die Wetterdaten bei:
 

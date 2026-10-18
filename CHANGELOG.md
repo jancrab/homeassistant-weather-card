@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Add **Always dark / Immer dunkel** and use it when no color mode is configured, keeping the default daytime card as dark as the night palette.
+- Keep astronomical day/night, weather animations, explicit sun/theme modes and custom palette variables independent from the fixed dark palette.
+- Preserve explicit color-mode selections through editor cleanup and layout preset changes.
+
 ## 0.1.1
 
 - Remove the visible five-hour heading while retaining accessible forecast labels and the details control.

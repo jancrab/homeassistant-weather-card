@@ -1,5 +1,12 @@
 # Validation
 
+Validated v0.1.2 locally on 2026-10-18:
+
+- `npm run check`: 15 tests passed and production bundle built.
+- Dark default verified with and without custom containers, through day/night transitions, with no sun entity, and against explicit sun/theme choices. Editor tests cover the German option and preservation through preset changes.
+- Simulated Slim browser preview at 360 px: dark sky and readable light text on a light dashboard during daytime; actual night enables the star canvas; switching back to the sun-following mode restores the light daytime scheme.
+- [Dark daytime preview](preview-dark-day-v0.1.2.jpg). These checks do not constitute live Home Assistant verification.
+
 Validated locally on 2026-10-15.
 
 - `npm run check` for v0.1.1: 14 tests passed; production bundle built successfully.

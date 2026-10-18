@@ -26,6 +26,7 @@ Copy `dist/homeassistant-weather-card.js` to `config/www/homeassistant-weather-c
 ```yaml
 type: custom:homeassistant-weather-card
 weather_entity: weather.home
+color_mode: dark # dark palette all day; sun/moon and weather remain live
 show_hourly: true
 show_precipitation: true
 show_uv: false
@@ -41,6 +42,8 @@ uv_entity: sensor.outdoor_uv_index
 ```
 
 Omit `uv_entity` to use the weather entity's `uv_index`; no separate sensor is needed when the provider supplies that attribute. Values from missing or unavailable sensors are shown as unavailable. A missing selected sensor does not silently fall back to a different source. The editor explains when the source has no current UV value. See [UV data sources](docs/tablet-setup.md#uv-datenquelle) for setup options.
+
+From v0.1.2, an omitted `color_mode` uses the dark palette during both day and night. Select **Always dark / Immer dunkel** in the editor, or set `color_mode: dark` on an existing card. The actual sun/moon and astronomical night effects still follow the sun entity. `color_mode: sun` restores the original bright-day/dark-night palette; `color_mode: theme` follows Home Assistant. Explicit saved color modes and custom palette variables remain supported.
 
 The selected weather integration must support **hourly forecasts**. Daily forecasts are not substituted. Five hours means five successive hourly timestamps beginning with the provider's next forecast, within the next five hours. Sparse data displays gaps. This is an hourly precipitation forecast, not a minute-by-minute rain radar. Home Assistant's precipitation amount can include snow or other precipitation, so it is labelled **Precipitation / Niederschlag**.
 

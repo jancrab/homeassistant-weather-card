@@ -36,7 +36,7 @@ const KEY_ORDER = Object.freeze([
 const CARD_THRESHOLD_KEYS = Object.freeze(["background_thresholds", "background_threshold_entity", "background_threshold_attribute"]);
 const buttonStyle = (v) => { const s = (v || "").toString().toLowerCase(); return s === "vertical" || s === "split" ? s : "inline"; };
 const DISPLAY_DEFAULTS = Object.freeze({
-    color_mode: "sun", sun_entity: "sun.sun", background_mode: "default",
+    color_mode: "dark", sun_entity: "sun.sun", background_mode: "default",
     sun_moon_size: 80, sun_moon_x: 50,
     bg_brightness: 1.0, bg_saturation: 1.0, bg_blur: 0, bg_blend: 0, gradient_angle: 180, gradient_x: 50, gradient_y: 50, gradient_stop_1: 0, gradient_stop_2: 100});
 const OPT = Object.freeze({
@@ -579,6 +579,7 @@ class WeatherCardEditor extends LitElement {
                 continue;}
             if (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0) delete out[key];}
         for (const [k, defVal] of Object.entries(DISPLAY_DEFAULTS)) {
+            if (k === 'color_mode') continue; // Preserve an explicit palette choice across preset changes.
             if (out[k] === defVal) delete out[k];}
         const ordered = {};
         for (const k of KEY_ORDER) {
@@ -659,7 +660,7 @@ class WeatherCardEditor extends LitElement {
         const entity = current.weather_entity || "";
         const next = instantiatePreset(preset, entity);
         if (entity) next.weather_entity = entity;
-        for (const key of ["type", "name", "sun_entity", "icon_path", "show_hourly", "show_precipitation", "show_uv", "uv_entity", "details_mode", "compact"]) {
+        for (const key of ["type", "name", "sun_entity", "icon_path", "show_hourly", "show_precipitation", "show_uv", "uv_entity", "details_mode", "compact", "color_mode"]) {
             if (current[key] != null && current[key] !== "") next[key] = current[key];
         }
         this._patch(next, { replace: true });
@@ -1975,8 +1976,8 @@ class WeatherCardEditor extends LitElement {
                 ${this._renderSlider("gradient_stop_2", "End position", 0, 100, 1)}` : ""}</div>`)}
             ${this._renderDisclosure("Color settings", html`
                 <div class="fc-box" style="margin-top:0">
-                    ${this._renderForm([{ name: "color_mode", selector: { select: { mode: "dropdown", options: OPT.color_mode } } }])}
-                    ${showBgFilters && c.color_mode !== "theme" ? html`<div class="toggle-group"><label class="toggle-row"><span>Adapt to dark theme</span>
+                    ${this._renderForm([{ name: "color_mode", selector: { select: { mode: "dropdown", options: [{ value: 'dark', label: outlookLabels(this.hass).always_dark }, ...OPT.color_mode] } } }])}
+                    ${showBgFilters && c.color_mode === "sun" ? html`<div class="toggle-group"><label class="toggle-row"><span>Adapt to dark theme</span>
                         <ha-switch .checked=${c.dark_theme_adaptation !== false}
                             @change=${(e) => this._updateField("dark_theme_adaptation", e.target.checked ? "" : false)}></ha-switch></label></div>` : ""}
                 </div>

@@ -701,7 +701,7 @@ export const instantiatePreset = (preset, entity) => rebindPresetEntities(deepCl
 export const buildStubConfig = (hass, weatherEntity) => {
     const entity = weatherEntity || (hass ? Object.keys(hass.states).find((e) => e.startsWith('weather.')) : null) || 'weather.home';
     return {
-        weather_entity: entity, card_height: 'content', card_padding: '16px', compact: true,
+        weather_entity: entity, card_height: 'content', card_padding: '16px', compact: true, color_mode: 'dark',
         sun_moon_x: 'dynamic', sun_moon_size: 80,
         show_hourly: true, show_precipitation: true, show_uv: false, details_mode: 'toggle',
         button_containers: [{

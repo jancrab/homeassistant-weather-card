@@ -1626,8 +1626,8 @@ class WeatherCard extends HTMLElement {
         for (const id of this._trackedEntityIds()) refs.set(id, hass.states[id]);
         this._refButtonEntities = refs;
         const isAstroNight = !!sunObj && (sunObj.state || '').toLowerCase() === 'below_horizon';
-        const colorMode = (cfg.color_mode || 'sun').toLowerCase();
-        if (colorMode !== 'theme' && !sunObj) this._warnMissingSun();
+        const colorMode = (cfg.color_mode || 'dark').toLowerCase();
+        if (colorMode === 'sun' && !sunObj) this._warnMissingSun();
         const schemeDark = WeatherCard._schemeDarkFromColorMode(colorMode, themeDark, isAstroNight);
         const hasAstroNightChanged = this._isAstroNight !== isAstroNight;
         const hasSchemeDarkChanged = this._schemeDark !== schemeDark;
@@ -1892,7 +1892,7 @@ class WeatherCard extends HTMLElement {
         return half > 0 ? Math.min(1, Math.max(0, 0.5 + (now - mid) / (2 * half))) : 0.5;
     }
     static _schemeDarkFromColorMode(colorMode, themeIsDark, isAstroNight) {
-        return colorMode === 'theme' ? themeIsDark : isAstroNight;
+        return colorMode === 'dark' ? true : colorMode === 'theme' ? themeIsDark : isAstroNight;
     }
     static _sunPalette(warm, saturation) {
         const wash = 1 - saturation;

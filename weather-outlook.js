@@ -3,6 +3,7 @@ import { nextFiveHours, precipitationSummary, currentUV, outlookEnabled, HourlyF
 
 export const OUTLOOK_LABELS = {
     en: {
+        always_dark: 'Always dark',
         heading: 'The next 5 hours', hourly: 'Hourly forecast', precipitation: 'Precipitation',
         show_hourly: 'Show the next 5 hours', show_precipitation: 'Show precipitation', show_uv: 'Show UV index',
         uv_entity: 'Optional UV sensor', uv_help: 'Uses the weather entity’s UV index unless a sensor is selected.',
@@ -21,6 +22,7 @@ export const OUTLOOK_LABELS = {
         lightning: 'Thunderstorms', 'lightning-rainy': 'Rain and thunderstorms', windy: 'Windy', 'windy-variant': 'Wind and clouds', exceptional: 'Exceptional'
     },
     de: {
+        always_dark: 'Immer dunkel',
         heading: 'Die nächsten 5 Stunden', hourly: 'Stündliche Vorhersage', precipitation: 'Niederschlag',
         show_hourly: 'Die nächsten 5 Stunden anzeigen', show_precipitation: 'Niederschlag anzeigen', show_uv: 'UV-Index anzeigen',
         uv_entity: 'Optionaler UV-Sensor', uv_help: 'Verwendet den UV-Index der Wetterentität, sofern kein Sensor ausgewählt ist.',
