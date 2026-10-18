@@ -1,5 +1,12 @@
 # Validation
 
+Validated v0.1.3 locally on 2026-10-18:
+
+- `npm run check`: 15 tests passed and production bundle built.
+- Slim's hourly panel uses translucent gray, 10 px backdrop blur, the inherited fine border and 19 px radius with the demo theme. The precipitation panel fits at 280 px; the detail disclosure remains functional.
+- Original haze layers report their CSS animations as running. The weather animation engine was not changed; hourly HA icons remain static.
+- [Matching glass panel preview](preview-glass-v0.1.3.jpg), with simulated HA data.
+
 Validated v0.1.2 locally on 2026-10-18:
 
 - `npm run check`: 15 tests passed and production bundle built.

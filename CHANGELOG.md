@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Match hourly and precipitation panels to Slim's translucent glass surfaces, with the existing border, corner, blur and shadow tokens.
+- Preserve the animated weather background and smooth detail disclosure.
+
 ## 0.1.2
 
 - Add **Always dark / Immer dunkel** and use it when no color mode is configured, keeping the default daytime card as dark as the night palette.

@@ -192,7 +192,15 @@ export class WeatherOutlook extends LitElement {
         .details-inner { min-height: 0; overflow: hidden; }
         .entity-link { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 11px; color: var(--outlook-muted); }
         ha-icon { --mdc-icon-size: 20px; }
-        .hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: var(--weather-outlook-hour-padding, 14px) 0; margin-bottom: 0; border-radius: 14px; background: color-mix(in srgb, var(--_scheme-bg, var(--ha-card-background, white)) 60%, transparent); }
+        .hours, .rain {
+            background: var(--weather-card-panel-background, var(--origami-bottom-bg-color, rgba(189, 189, 189, .2)));
+            border: var(--origami-bg-border, var(--ha-card-border-width, 1px) solid var(--_text-bg-border, var(--outlook-line)));
+            border-radius: var(--origami-bottom-bg-radius, calc(var(--_radius, 24px) - 5px));
+            box-shadow: var(--_origami-button-shadow, none);
+            backdrop-filter: var(--origami-bottom-bg-filter, blur(10px));
+            -webkit-backdrop-filter: var(--origami-bottom-bg-filter, blur(10px));
+        }
+        .hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: var(--weather-outlook-hour-padding, 14px) 0; margin-bottom: 0; }
         .hour { display: flex; flex-direction: column; align-items: center; gap: var(--weather-outlook-hour-gap, 10px); min-width: 0; padding: 0 2px; }
         .hour + .hour { border-inline-start: 1px solid var(--outlook-line); }
         time { font-size: 11px; color: var(--outlook-muted); white-space: nowrap; }
@@ -202,7 +210,7 @@ export class WeatherOutlook extends LitElement {
         .probability { display: flex; align-items: center; gap: 1px; font-size: 11px; }
         .probability ha-icon { --mdc-icon-size: 12px; color: var(--outlook-rain); }
         .amount { font-size: 10px; color: var(--outlook-muted); overflow-wrap: anywhere; text-align: center; }
-        .rain { background: var(--outlook-surface); padding: 12px; margin-top: 8px; border-radius: 16px; border: 1px solid var(--outlook-line); }
+        .rain { padding: 12px; margin-top: 8px; }
         .rain-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
         .rain-title ha-icon { color: var(--outlook-rain); }
         .rain-hours { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 16px -8px; }
