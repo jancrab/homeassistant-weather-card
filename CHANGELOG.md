@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+- Remove the separate details toolbar and its divider/spacing.
+- Tap the hourly forecast itself to expand or collapse details, with native Enter/Space keyboard support and an accessible label.
+- Keep enabled details visible when hourly data or the hourly overview is absent, so UV and precipitation remain reachable.
+
 ## 0.1.3
 
 - Match hourly and precipitation panels to Slim's translucent glass surfaces, with the existing border, corner, blur and shadow tokens.

@@ -198,14 +198,18 @@ test('editor bootstraps HA fields and toggles features while retaining custom co
 });
 
 test('touch disclosure preserves the overview and live updates, resets on entity change, and supports always-open mode', async () => {
-    const { hass } = fixture();
+    const { hass, emit } = fixture();
     const outlook = new WeatherOutlook();
     document.body.append(outlook);
     const config = { weather_entity: 'weather.home', show_uv: true };
     outlook.setData(hass, config);
+    const forecast = [{ datetime: new Date(Math.ceil(Date.now() / 3600000) * 3600000).toISOString(), temperature: 18 }];
+    emit(forecast);
     await outlook.updateComplete;
     const region = () => outlook.shadowRoot.querySelector('#outlook-details');
     const button = () => outlook.shadowRoot.querySelector('.details-toggle');
+    assert.equal(outlook.shadowRoot.querySelector('header'), null);
+    assert.equal(button().textContent.trim(), '', 'the forecast itself is the touch target, without a visible toolbar');
     assert.equal(button().getAttribute('aria-expanded'), 'false');
     assert.equal(region().hasAttribute('inert'), true);
     button().click();
@@ -226,7 +230,16 @@ test('touch disclosure preserves the overview and live updates, resets on entity
     assert.equal(region().getAttribute('aria-hidden'), 'false');
     outlook.setData(hass, { ...config, weather_entity: 'weather.other' });
     await outlook.updateComplete;
+    assert.equal(button(), null);
+    assert.equal(region().getAttribute('aria-hidden'), 'false', 'missing hourly data must not hide UV behind an absent control');
+    outlook.setData(hass, config);
+    emit(forecast);
+    await outlook.updateComplete;
     assert.equal(button().getAttribute('aria-expanded'), 'false');
+    outlook.setData(hass, { ...config, show_hourly: false });
+    await outlook.updateComplete;
+    assert.equal(button(), null);
+    assert.equal(region().getAttribute('aria-hidden'), 'false');
     outlook.remove();
 });
 

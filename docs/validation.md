@@ -1,5 +1,12 @@
 # Validation
 
+Validated v0.1.4 locally on 2026-10-18:
+
+- `npm run check`: 15 tests passed and production bundle built.
+- The separate details toolbar and divider are absent. Clicking the hourly forecast, Enter and Space toggle the details in the simulated Slim browser preview at 360 px.
+- Tests cover preservation of the expanded state across updates, always-open mode, and visible enabled details when the hourly overview is disabled or unavailable.
+- [Direct-touch preview](preview-direct-touch-v0.1.4.jpg), with simulated HA data; no live Home Assistant verification.
+
 Validated v0.1.3 locally on 2026-10-18:
 
 - `npm run check`: 15 tests passed and production bundle built.

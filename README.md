@@ -9,7 +9,7 @@ An independent extension of [Origami Weather by hazymorning](https://github.com/
 - Optional **current UV index**, enabled with a switch in the visual editor. Uses the weather entity or an explicitly chosen sensor.
 - Three quick editor switches above the original advanced editor. New UI labels support German and English.
 - Own element name allows installation alongside the original card.
-- Compact overview by default; tap **Details** to smoothly reveal precipitation and optional UV without leaving the card. The choice stays open during live updates. Set `details_mode: always` to keep details visible.
+- Compact overview by default; tap the **hourly forecast** to smoothly reveal or hide precipitation and optional UV without leaving the card. There is no separate details toolbar. Enter/Space works on the same focusable target. The choice stays open during live updates. Set `details_mode: always` to keep details visible. When the hourly overview is disabled or unavailable, enabled details are shown directly.
 
 ## Install with HACS
 
@@ -30,7 +30,7 @@ color_mode: dark # dark palette all day; sun/moon and weather remain live
 show_hourly: true
 show_precipitation: true
 show_uv: false
-details_mode: toggle # default: tap Details; use always for permanently visible details
+details_mode: toggle # tap the hourly forecast; use always for permanently visible details
 compact: true # wrap horizontal value rows and reduce spacing on tablets
 ```
 

@@ -119,21 +119,18 @@ export class WeatherOutlook extends LitElement {
         const status = this.forecasts.status;
         const uv = currentUV(this.hass, c);
         const hasDetails = c.show_precipitation !== false || c.show_uv === true;
-        const expanded = c.details_mode === 'always' || this._expanded;
+        const hasOverview = c.show_hourly !== false && status === 'ready' && hours.length > 0;
+        const canToggle = hasDetails && hasOverview && c.details_mode !== 'always';
+        // Without an hourly touch target, keep enabled details directly accessible.
+        const expanded = !hasOverview || c.details_mode === 'always' || this._expanded;
         return html`
-            <header>
-                ${wantsForecast ? nothing : html`<h3>${t.details}</h3>`}
-                ${hasDetails && c.details_mode !== 'always' ? html`
-                    <button class="details-toggle" @click=${this._toggleDetails} aria-expanded=${String(expanded)} aria-controls="outlook-details" aria-label=${expanded ? t.collapse : t.expand}>
-                        ${expanded ? t.less : t.details_short}<ha-icon icon="mdi:chevron-down" class=${expanded ? 'rotated' : ''}></ha-icon>
-                    </button>` : html`<button class="more-info" @click=${this._moreInfo} aria-label=${t.native_details}><ha-icon icon="mdi:arrow-top-right"></ha-icon></button>`}
-            </header>
             ${wantsForecast ? html`
                 ${status !== 'ready' || !hours.length ? html`
                     <div class="status" role="status">${t[status] || t.empty}
                         ${status === 'error' || status === 'ready' ? html`<button @click=${() => this.forecasts.retry()}>${t.retry}</button>` : nothing}
                     </div>` : html`
                     ${c.show_hourly !== false ? html`
+                        <div class="overview">
                         <div class="hours" role="list" aria-label=${t.hourly}>
                             ${hours.map(hour => html`
                                 <div class="hour" role="listitem">
@@ -141,6 +138,13 @@ export class WeatherOutlook extends LitElement {
                                     <ha-icon class="condition" icon=${`mdi:${weatherIcons[hour.condition] || 'help-circle-outline'}`} role="img" aria-label=${t[hour.condition] || t.missing}></ha-icon>
                                     <strong class="temperature">${this._number(hour.temperature, 0)}<span>${hour.temperature !== null ? temperatureUnit : ''}</span></strong>
                                 </div>`)}
+                        </div>
+                        <button class=${`forecast-action ${canToggle ? 'details-toggle' : 'more-info'}`}
+                            @click=${canToggle ? this._toggleDetails : this._moreInfo}
+                            aria-expanded=${canToggle ? String(expanded) : nothing}
+                            aria-controls=${canToggle ? 'outlook-details' : nothing}
+                            aria-label=${`${t.hourly}: ${canToggle ? (expanded ? t.collapse : t.expand) : t.native_details}`}>
+                        </button>
                         </div>` : nothing}
                 `}
             ` : nothing}
@@ -177,16 +181,13 @@ export class WeatherOutlook extends LitElement {
     }
     static styles = css`
         :host { display: block; width: 100%; min-width: 0; box-sizing: border-box; color: var(--origami-text-color, var(--primary-text-color)); font-family: inherit; font-variant-numeric: tabular-nums; pointer-events: auto; --outlook-muted: color-mix(in srgb, currentColor 72%, transparent); --outlook-line: color-mix(in srgb, currentColor 13%, transparent); --outlook-surface: color-mix(in srgb, var(--_scheme-bg, var(--ha-card-background, white)) 78%, transparent); --outlook-rain: var(--weather-card-rain-color, var(--primary-color, #1688b9)); }
-        header { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--outlook-line); margin-top: var(--weather-outlook-header-gap, 20px); padding-top: 4px; gap: 8px; }
-        h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+        .overview { position: relative; margin-top: var(--weather-outlook-header-gap, 20px); }
         button { min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; cursor: pointer; padding: 8px 12px; }
         button:hover { background: var(--outlook-line); }
-        header > button { margin-inline-start: auto; }
         button:focus-visible { outline: 2px solid var(--primary-color, currentColor); outline-offset: 2px; }
         .more-info { min-width: 44px; padding: 10px; }
-        .details-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; font-size: 12px; padding: 8px; }
-        .details-toggle ha-icon { --mdc-icon-size: 16px; transition: transform 240ms ease; }
-        .details-toggle .rotated { transform: rotate(180deg); }
+        .forecast-action { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border-radius: var(--origami-bottom-bg-radius, calc(var(--_radius, 24px) - 5px)); background: transparent; touch-action: manipulation; }
+        .forecast-action:hover { background: transparent; }
         .details-region { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 240ms ease, opacity 180ms ease; }
         .details-region.expanded { grid-template-rows: 1fr; opacity: 1; }
         .details-inner { min-height: 0; overflow: hidden; }

@@ -26,7 +26,7 @@ grid_options:
   rows: auto
 ```
 
-Die Karte zeigt dauerhaft das aktuelle Wetter und fünf Stunden mit Wetterlage und Temperatur. **Details** öffnet Niederschlagswerte und UV weich innerhalb derselben Karte; **Weniger** klappt sie wieder ein. Die Übersicht bleibt sichtbar. Keine automatische Rotation und kein Zurückspringen bei Wetterupdates. Nach einem Neuladen startet die Karte wieder kompakt. `details_mode: always` hält Details dauerhaft offen; dieselbe Option gibt es im visuellen Editor.
+Die Karte zeigt dauerhaft das aktuelle Wetter und fünf Stunden mit Wetterlage und Temperatur. **Tippe direkt auf die Stundenprognose**, um Niederschlagswerte und UV weich zu öffnen; erneutes Tippen klappt sie wieder ein. Eine separate Details-Leiste gibt es nicht mehr. Per Tastatur funktionieren Enter und Leertaste auf derselben Fläche. Die Übersicht bleibt sichtbar. Keine automatische Rotation und kein Zurückspringen bei Wetterupdates. Nach einem Neuladen startet die Karte wieder kompakt. `details_mode: always` hält Details dauerhaft offen; dieselbe Option gibt es im visuellen Editor. Ist die Stundenprognose ausgeschaltet oder nicht verfügbar, werden eingeschaltete Details direkt angezeigt.
 
 ### UV-Datenquelle
 

@@ -1,6 +1,6 @@
 {
   "name": "homeassistant-weather-card",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "type": "module",
   "description": "Animated Home Assistant weather card with a five-hour outlook, precipitation and optional UV index",
